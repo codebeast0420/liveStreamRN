@@ -30,6 +30,7 @@ function JoinScreen(props) {
 			<TouchableOpacity
 				onPress={() => {
 					props.getMeetingId();
+					props.setServer(true);
 				}}
 				style={{ backgroundColor: "#1178F8", padding: 12, borderRadius: 6 }}
 			>
@@ -145,7 +146,7 @@ function ParticipantView({ participantId }) {
 			streamURL={new MediaStream([webcamStream.track]).toURL()}
 			objectFit={"cover"}
 			style={{
-				height: 300,
+				height: 600,
 				marginVertical: 8,
 				marginHorizontal: 8,
 			}}
@@ -164,14 +165,9 @@ function ParticipantView({ participantId }) {
 	);
 }
 
-function ParticipantList({ participants }) {
+function ParticipantList({ participants, isServer }) {
 	return participants.length > 0 ? (
-		<FlatList
-			data={participants}
-			renderItem={({ item }) => {
-				return <ParticipantView participantId={item} />;
-			}}
-		/>
+		isServer ? <ParticipantView participantId={participants[0]} /> : <ParticipantView participantId={participants[1]} />
 	) : (
 		<View
 			style={{
@@ -186,18 +182,19 @@ function ParticipantList({ participants }) {
 	);
 }
 
-function MeetingView({ setMeetingId }) {
+function MeetingView({ setMeetingId, isServer, setServer }) {
 	const { join, leave, toggleWebcam, toggleMic, participants } = useMeeting({});
 	const participantsArrId = [...participants.keys()];
 	const _leave = () => {
 		leave();
 		setMeetingId(null);
+		setServer(false);
 	}
 
 
 	return (
 		<View style={{ flex: 1 }}>
-			<ParticipantList participants={participantsArrId} />
+			<ParticipantList participants={participantsArrId} isServer={isServer} />
 			<ControlsContainer
 				join={join}
 				leave={_leave}
@@ -210,6 +207,7 @@ function MeetingView({ setMeetingId }) {
 
 const Home = () => {
 	const [meetingId, setMeetingId] = useState(null);
+	const [isServer, setIsServer] = useState(false);
 
 	const getMeetingId = async (id) => {
 		const meetingId = id == null ? await createMeeting({ token }) : id;
@@ -228,11 +226,11 @@ const Home = () => {
 				token={token}
 			>
 				<Text style={{ marginLeft: '30px', textAlign: 'center' }}>{meetingId}</Text>
-				<MeetingView setMeetingId={setMeetingId} />
+				<MeetingView setMeetingId={setMeetingId} isServer={isServer} setServer={setIsServer} />
 			</MeetingProvider>
 		</SafeAreaView>
 	) : (
-		<JoinScreen getMeetingId={getMeetingId} />
+		<JoinScreen getMeetingId={getMeetingId} setServer={setIsServer}/>
 	);
 }
 
